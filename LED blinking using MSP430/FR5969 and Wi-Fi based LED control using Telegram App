@@ -1,0 +1,51 @@
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
+
+// ====== Your WiFi + Bot Info ======
+const char* ssid = "Your_WiFi_SSID";
+const char* password = "Your_WiFi_Password";
+const char* token = "YOUR_BOT_TOKEN";
+// ==================================
+
+WiFiClientSecure client;
+UniversalTelegramBot bot(token, client);
+const int ledPin = 2; // D4 (built-in LED)
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(300);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ WiFi connected: " + WiFi.localIP().toString());
+
+  client.setInsecure();
+  Serial.println("🤖 Bot ready! Send /on or /off");
+}
+
+void loop() {
+  int newMsg = bot.getUpdates(bot.last_message_received + 1);
+  for (int i = 0; i < newMsg; i++) {
+    String chat_id = bot.messages[i].chat_id;
+    String text = bot.messages[i].text;
+
+    if (text == "/on") {
+      digitalWrite(ledPin, HIGH);
+      bot.sendMessage(chat_id, "💡 LED ON");
+    } 
+    else if (text == "/off") {
+      digitalWrite(ledPin, LOW);
+      bot.sendMessage(chat_id, "💤 LED OFF");
+    } 
+    else {
+      bot.sendMessage(chat_id, "Use /on or /off");
+    }
+  }
+  delay(1000);
+}
